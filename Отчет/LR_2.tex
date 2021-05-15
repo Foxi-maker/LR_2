@@ -1,0 +1,76 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[cp1251]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{grffile}
+
+\usepackage[footnotes,oglav,spisok,boldsect,eqwhole,figwhole,kursrab,remarks,hyperprint,greekup]{projectNew}
+
+\begin{document}
+\section*{Вариант №9}
+
+\subsection*{1. Задание по варианту}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+	\hline
+$\rho$	& $c$ & $\alpha$ &$\beta$  & $\gamma$ & $u_0$ &$k_1$  & $k_2$ & $x_1$ & $x_2$ \\
+	\hline
+4	&0.5  & 0.1 &1  & 3 & 0.3 & 0.5 &2.5  & 1/3 & 3/4 \\
+	\hline
+\end{tabular}
+\end{center}
+
+Тепловой поток слева 
+\begin{equation*}
+P_1 = 
+\begin{cases}
+10, &0\leq t<0.5,\\
+0, &t\geq 0.5.
+\end{cases}
+\end{equation*}
+
+Температура на правом конце стержня $u=u_0$. Длинна стержня $l=1$. Шаг по времени $\tau=0.01$, шаг по пространству $h=0.1$.
+
+\subsection*{2.Порядки схем}
+
+Будем рассматривать порядки сходимости схем на примере:
+\begin{equation}\label{eq1}
+u(x,t)=sin(\pi x) e^{-\lambda t}.
+\end{equation}
+Подставим \eqref{eq1} в уравнение теплопроводности и получим, что коэффициент $\displaystyle k=\frac{\lambda}{\pi^2}$.
+\subsection*{Явная схема}
+Для устойчивости явной схемы необходимо выполнение соотношения:
+\begin{equation}\label{eq2}
+\sigma\ 	\geqslant \frac{1}{2} - \frac{h^2}{4 \tau k}.
+\end{equation}
+
+Преобразовав \eqref{eq2} для примера \eqref{eq1} получим
+
+\begin{equation}\label{eq3}
+\frac{\pi^2}{2}h^2 \geqslant \tau.
+\end{equation}
+
+Таблица для момента времени $t=3$:
+
+\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	$n$	&  Шаг сетки  & Норма ошибки  & Отношение ошибок  & Порядок сходимости   \\
+	&$h_n$& $||y_k-u(t_k)||$ & $z_n$& $p_n$\\
+	\hline
+	1	& $h$=0.1,$\tau$=0.01 & 0.00108951 & - & - \\
+	\hline
+	2	&  $h/2$, $\tau$=0.0025& 0.000381943 &  &  \\
+	\hline
+	3	& $ h/4$ &  &  &  \\
+	\hline
+	4	& $ h/8 $&  &  &  \\
+	\hline
+\end{tabular}
+
+
+3. Пример 3
+\end{document}
