@@ -16,7 +16,7 @@ Equation::Equation(std::function<double(double, double)> TCX, std::string na)
 void Equation::Scheme(double sig)
 {
 	//Шаг по времени и по положению
-	double tau = 0.01, h = 0.1;
+	double tau = 0.1, h = 0.2;
 	//double tau = 0.0025, h = 0.1 / 2;
 
 	int Nx = L / h + 1;
@@ -34,6 +34,12 @@ void Equation::Scheme(double sig)
 		//grid[0][pIter] = u0 + x * (L - x);
 		x += h;
 	}
+
+	for (const auto gx : grid[0])
+	{
+		out << gx << " ";
+	}
+	out << "\n";
 
 	//Занчение t_0 по варианту
 	//double t0 = .5;
@@ -79,6 +85,12 @@ void Equation::Scheme(double sig)
 				x += h;
 			}
 			grid[0] = grid[1];
+
+			for (const auto gx : grid[0])
+			{
+				out << gx << " ";
+			}
+			out << "\n";
 		}
 	}
 	else
@@ -98,69 +110,82 @@ void Equation::Scheme(double sig)
 			grid[1].back() = 0.;
 
 			x = h;
-			/*size_t Iter = 0;
-			for (Iter; Iter < 5; Iter++)
-			{*/
-				//Первая итерация
-				aPres = 0.5 * (K(grid[0][1], x) + K(grid[0][0], x - h));
-				aNext = 0.5 * (K(grid[0][2], x + h) + K(grid[0][1], x));
-				A = sigh * aPres;
-				B = sigh * aNext;
-				C = sigh * aPres + sigh * aNext + crohtau;
-				F = crohtau * grid[0][1] + (1 - sig) * (aNext * (grid[0][2] - grid[0][1]) / h - aPres * (grid[0][1] - grid[0][0]) / h);
+			//std::cout << "tIter: " << tIter << "\n";
+			//Первая итерация
+			aPres = 0.5 * (K(grid[0][1], x) + K(grid[0][0], x - h));
+			aNext = 0.5 * (K(grid[0][2], x + h) + K(grid[0][1], x));
+			//std::cout << "aPres: " << aPres << ", aNext:" << aNext << "\n";
 
-				alpha.push_back(B / C);
-				betta.push_back((F + A * grid[1][0]) / C);
+			A = sigh * aPres;
+			B = sigh * aNext;
+			C = A + B + crohtau;
+			F = crohtau * grid[0][1] + (1 - sig) * (aNext * (grid[0][2] - grid[0][1]) / h - aPres * (grid[0][1] - grid[0][0]) / h);
+			//std::cout << "A: " << A << ", B: " << B << ", C: " << C << ", F: " << F << "\n";
 
-				for (size_t pIter = 2; pIter < Nx - 2; pIter++)
-				{
-					x += h;
-					aPres = 0.5 * (K(grid[0][pIter], x) + K(grid[0][pIter - 1], x - h));
-					aNext = 0.5 * (K(grid[0][pIter + 1], x + h) + K(grid[0][pIter], x));
+			alpha.push_back(B / C);
+			betta.push_back((F + A * grid[1][0]) / C);
+			//std::cout << "alpha.back(): " << alpha.back() << ", betta.back(): " << betta.back() << "\n";
 
-					A = sigh * aPres;
-					B = sigh * aNext;
-					C = sigh * aPres + sigh * aNext + crohtau;
-					F = crohtau * grid[0][pIter] + (1 - sig) * (aNext * (grid[0][pIter + 1] - grid[0][pIter]) / h - aPres * (grid[0][pIter] - grid[0][pIter - 1]) / h);
-
-					temp = C - A * alpha.back();
-
-					alpha.push_back(B / temp);
-					betta.push_back((A * betta.back() + F) / temp);	//TODO: знак перед F
-
-				}
+			for (size_t pIter = 2; pIter < Nx - 2; pIter++)
+			{
+				std::cout << "\n";
 				x += h;
-				//Последняя итерация
-				aPres = 0.5 * (K(grid[0][Nx - 2], x) + K(grid[0][Nx - 3], x - h));
-				aNext = 0.5 * (K(grid[0][Nx - 1], x + h) + K(grid[0][Nx - 2], x));
+				aPres = 0.5 * (K(grid[0][pIter], x) + K(grid[0][pIter - 1], x - h));
+				aNext = 0.5 * (K(grid[0][pIter + 1], x + h) + K(grid[0][pIter], x));
+				//std::cout << "aPres: " << aPres << ", aNext:" << aNext << "\n";
+
 				A = sigh * aPres;
 				B = sigh * aNext;
-				C = sigh * aPres + sigh * aNext + crohtau;
-				F = crohtau * grid[0][Nx - 2] + (1 - sig) * (aNext * (grid[0][Nx - 1] - grid[0][Nx - 2]) / h - aPres * (grid[0][Nx - 2] - grid[0][Nx - 3]) / h);
+				C = A + B + crohtau;
+				F = crohtau * grid[0][pIter] + (1 - sig) * (aNext * (grid[0][pIter + 1] - grid[0][pIter]) / h - aPres * (grid[0][pIter] - grid[0][pIter - 1]) / h);
+				//std::cout << "A: " << A << ", B: " << B << ", C: " << C << ", F: " << F << "\n";
 
 				temp = C - A * alpha.back();
 
-				grid[1][Nx - 2] = (A * betta.back() + F + B * grid[1][Nx - 1]) / temp;
+				alpha.push_back(B / temp);
+				betta.push_back((A * betta.back() + F) / temp);
+				//std::cout << "alpha.back(): " << alpha.back() << ", betta.back(): " << betta.back() << "\n";
+			}
+			x += h;
+			//Последняя итерация
+			aPres = 0.5 * (K(grid[0][Nx - 2], x) + K(grid[0][Nx - 3], x - h));
+			aNext = 0.5 * (K(grid[0][Nx - 1], x + h) + K(grid[0][Nx - 2], x));
+			//std::cout << "aPres: " << aPres << ", aNext:" << aNext << "\n";
+			A = sigh * aPres;
+			B = sigh * aNext;
+			C = A + B + crohtau;
+			F = crohtau * grid[0][Nx - 2] + (1 - sig) * (aNext * (grid[0][Nx - 1] - grid[0][Nx - 2]) / h - aPres * (grid[0][Nx - 2] - grid[0][Nx - 3]) / h);
+			//std::cout << "A: " << A << ", B: " << B << ", C: " << C << ", F: " << F << "\n";
 
-				//Обратный ход
-				for (size_t pIter = Nx - 3; pIter > 0; pIter--)
-				{
-					grid[1][pIter] = alpha[pIter - 1] * grid[1][pIter + 1] + betta[pIter - 1];
-				}
+			temp = C - A * alpha.back();
 
-				alpha.clear();
-				betta.clear();
+			grid[1][Nx - 2] = (A * betta.back() + F + B * grid[1][Nx - 1]) / temp;
 
-				grid[0] = grid[1];
-			//}
+
+			//Обратный ход
+			for (size_t pIter = Nx - 3; pIter > 0; pIter--)
+			{
+				grid[1][pIter] = alpha[pIter - 1] * grid[1][pIter + 1] + betta[pIter - 1];
+			}
+
+			alpha.clear();
+			betta.clear();
+
+			grid[0] = grid[1];
+
+			for (const auto gx : grid[0])
+			{
+				out << gx << " ";
+			}
+			out << "\n";
 		}
 	}
 
 	//Вывод в файл
-	for (const auto gx : grid[0])
-	{
-		out << gx << " ";
-	}
+	//for (const auto gx : grid[0])
+	//{
+	//	out << gx << " ";
+	//}
 }
 
 //Специально для примера 3
