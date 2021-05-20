@@ -9,7 +9,7 @@ class Equation
 	//Удельная теплоемкость, линейная плоность 
 	//double c = 0.5, ro = 4;
 	//Для примера 3 
-	double c = 1., ro = 1.;
+	double c = .5, ro = 4.;
 
 	//Коэффициент теплопроводности
 	std::function<double(double, double)> K;
