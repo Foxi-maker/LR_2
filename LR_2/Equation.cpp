@@ -103,74 +103,107 @@ void Equation::Scheme(double sig)
 		{
 			//Заполнение краевыми значениями на новом временном слое
 			time += tau;
-			if (time < 0.5)
-			{
-				//Поток слева для 9 варинта 
-				aPres = 0.5 * (K(grid[0][1], h) + K(grid[0][0], 0.));
-				grid[1].front() = (crohtau / 2. + sig * uLeft + (1 - sig)*(uLeft - aPres / h * (grid[0][1] - grid[0][0]))) / (crohtau / 2. + sig * aPres / h);
-				//grid[1].front() = uLeft;
-			}
-			else
-			{
-				grid[1].front() = 0.;
-			}
+			grid[1].front() = uRight;
+			//if (time < 0.5)
+			//{
+			//	//Поток слева для 9 варинта 
+			//	aPres = 0.5 * (K(grid[0][1], h) + K(grid[0][0], 0.));
+			//	grid[1].front() = (crohtau / 2. + sig * uLeft + (1 - sig)*(uLeft - aPres / h * (grid[0][1] - grid[0][0]))) / (crohtau / 2. + sig * aPres / h);
+			//	//grid[1].front() = uLeft;
+			//}
+			//else
+			//{
+			//	grid[1].front() = 0.;
+			//}
+
 			//Поток справа для 9 варинта 
-			grid[1].back() = uRight;
+			//Поток справа задается с приблежением на y^j_(Nx-1)
+			//if (time < 0.5)
+			//{
+			//	aPres = 0.5 * (K(grid[0][Nx - 1], L) + K(grid[0][Nx - 2], L - h));
+			//	temp = sig * aPres / h;
+			//	kap = temp / (temp + crohtau / 2.);
+			//	mu = (crohtau / 2.*grid[0][Nx - 1] + sig * uLeft + (1 - sig)*(uLeft - aPres * (grid[0][Nx-1] - grid[0][Nx-2]) / h)) / (crohtau / 2. + temp);
+			//	grid[1].back() = kap * grid[0][Nx - 2] + mu;
+			//}
+			//else
+			//{
+			//	grid[1].back() = 0.;
+			//}
 
-			x = h;
-			//Первая итерация
-			aPres = 0.5 * (K(grid[0][1], x) + K(grid[0][0], x - h));
-			aNext = 0.5 * (K(grid[0][2], x + h) + K(grid[0][1], x));
-
-			A = sigh * aPres;
-			B = sigh * aNext;
-			C = A + B + crohtau;
-			F = crohtau * grid[0][1] + (1 - sig) * (aNext * (grid[0][2] - grid[0][1]) / h - aPres * (grid[0][1] - grid[0][0]) / h);
-
-			alpha.push_back(B / C);
-			betta.push_back((F + A * grid[1][0]) / C);
-
-			for (size_t pIter = 2; pIter < Nx - 2; pIter++)
+			//Итерации для уточнения решения
+			for (size_t Iter = 0; Iter < 1; Iter++)
 			{
-				x += h;
-				aPres = 0.5 * (K(grid[0][pIter], x) + K(grid[0][pIter - 1], x - h));
-				aNext = 0.5 * (K(grid[0][pIter + 1], x + h) + K(grid[0][pIter], x));
+				x = h;
+				//Первая итерация
+				aPres = 0.5 * (K(grid[0][1], x) + K(grid[0][0], x - h));
+				aNext = 0.5 * (K(grid[0][2], x + h) + K(grid[0][1], x));
 
 				A = sigh * aPres;
 				B = sigh * aNext;
 				C = A + B + crohtau;
-				F = crohtau * grid[0][pIter] + (1 - sig) * (aNext * (grid[0][pIter + 1] - grid[0][pIter]) / h - aPres * (grid[0][pIter] - grid[0][pIter - 1]) / h);
+				F = crohtau * grid[0][1] + (1 - sig) * (aNext * (grid[0][2] - grid[0][1]) / h - aPres * (grid[0][1] - grid[0][0]) / h);
+
+				alpha.push_back(B / C);
+				betta.push_back((F + A * grid[1][0]) / C);
+
+				for (size_t pIter = 2; pIter < Nx - 2; pIter++)
+				{
+					x += h;
+					aPres = 0.5 * (K(grid[0][pIter], x) + K(grid[0][pIter - 1], x - h));
+					aNext = 0.5 * (K(grid[0][pIter + 1], x + h) + K(grid[0][pIter], x));
+
+					A = sigh * aPres;
+					B = sigh * aNext;
+					C = A + B + crohtau;
+					F = crohtau * grid[0][pIter] + (1 - sig) * (aNext * (grid[0][pIter + 1] - grid[0][pIter]) / h - aPres * (grid[0][pIter] - grid[0][pIter - 1]) / h);
+
+					temp = C - A * alpha.back();
+
+					alpha.push_back(B / temp);
+					betta.push_back((A * betta.back() + F) / temp);
+				}
+				x += h;
+				//Последняя итерация
+				aPres = 0.5 * (K(grid[0][Nx - 2], x) + K(grid[0][Nx - 3], x - h));
+				aNext = 0.5 * (K(grid[0][Nx - 1], x + h) + K(grid[0][Nx - 2], x));
+
+				A = sigh * aPres;
+				B = sigh * aNext;
+				C = A + B + crohtau;
+				F = crohtau * grid[0][Nx - 2] + (1 - sig) * (aNext * (grid[0][Nx - 1] - grid[0][Nx - 2]) / h - aPres * (grid[0][Nx - 2] - grid[0][Nx - 3]) / h);
 
 				temp = C - A * alpha.back();
 
-				alpha.push_back(B / temp);
-				betta.push_back((A * betta.back() + F) / temp);
+				//grid[1][Nx - 2] = (A * betta.back() + F + B * grid[1][Nx - 1]) / temp;
+
+				//C учетом потока справа
+				if (time < 0.5)
+				{
+					double sig_a_h = sig * aNext / h;
+					kap = sig_a_h / (sig_a_h + crohtau / 2.);
+					mu = (crohtau / 2.*grid[0][Nx - 1] + sig * uLeft + (1 - sig)*(uLeft - aPres * (grid[0][Nx - 1] - grid[0][Nx - 2]) / h)) / (crohtau / 2. + sig_a_h);
+					grid[1][Nx - 2] = (A * betta.back() + F + B * mu) / (temp - B * kap);
+					grid[1][Nx - 1] = kap * grid[1][Nx - 2] + mu;
+				}
+				else
+				{
+					grid[1][Nx - 1] = 0.;
+					grid[1][Nx - 2] = (A * betta.back() + F) / temp;
+				}
+
+				//Обратный ход
+				for (size_t pIter = Nx - 3; pIter > 0; pIter--)
+				{
+					grid[1][pIter] = alpha[pIter - 1] * grid[1][pIter + 1] + betta[pIter - 1];
+				}
+
+				alpha.clear();
+				betta.clear();
+
+				grid[0] = grid[1];
+
 			}
-			x += h;
-			//Последняя итерация
-			aPres = 0.5 * (K(grid[0][Nx - 2], x) + K(grid[0][Nx - 3], x - h));
-			aNext = 0.5 * (K(grid[0][Nx - 1], x + h) + K(grid[0][Nx - 2], x));
-
-			A = sigh * aPres;
-			B = sigh * aNext;
-			C = A + B + crohtau;
-			F = crohtau * grid[0][Nx - 2] + (1 - sig) * (aNext * (grid[0][Nx - 1] - grid[0][Nx - 2]) / h - aPres * (grid[0][Nx - 2] - grid[0][Nx - 3]) / h);
-
-			temp = C - A * alpha.back();
-
-			grid[1][Nx - 2] = (A * betta.back() + F + B * grid[1][Nx - 1]) / temp;
-
-			//Обратный ход
-			for (size_t pIter = Nx - 3; pIter > 0; pIter--)
-			{
-				grid[1][pIter] = alpha[pIter - 1] * grid[1][pIter + 1] + betta[pIter - 1];
-			}
-
-			alpha.clear();
-			betta.clear();
-
-			grid[0] = grid[1];
-
 			/*	if (tIter % 5 == 0)
 				{*/
 			for (const auto gx : grid[0])

@@ -11,12 +11,12 @@ int main()
 
 	//Equation first(ThermCondExZero, std::string("example0Ex8"));
 
-	Equation first(ThermCondX, std::string("var9XEx"));
+	Equation first(ThermCondX, std::string("var9XImR2"));
 
 	//Equation first(ThermCondU, std::string("var9UMix"));
 
 	//Параметр сигма(от 0 до 1) разностной схемы 
-	double sigma = 0.;
+	double sigma = 1.;
 
 	first.Scheme(sigma);
 
